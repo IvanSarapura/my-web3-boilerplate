@@ -70,11 +70,22 @@ Abrí [http://localhost:3000](http://localhost:3000) en el navegador.
 | `npm run build`         | Build de producción             |
 | `npm run start`         | Servidor de producción          |
 | `npm run lint`          | Linter (ESLint)                 |
+| `npm run typecheck`     | Verificación de tipos (tsc)     |
 | `npm run format`        | Formatear código (Prettier)     |
 | `npm run format:check`  | Verificar formato sin modificar |
 | `npm test`              | Ejecutar tests (Vitest)         |
 | `npm run test:watch`    | Tests en modo watch             |
 | `npm run test:coverage` | Tests con reporte de cobertura  |
+
+## CI
+
+El proyecto incluye un workflow de GitHub Actions (`.github/workflows/ci.yml`) que se ejecuta en cada push a `main` y en pull requests. El pipeline verifica:
+
+1. **Formato** — `prettier --check`
+2. **Lint** — `eslint`
+3. **Tipos** — `tsc --noEmit`
+4. **Tests** — `vitest run`
+5. **Build** — `next build`
 
 ## Agregar redes
 
