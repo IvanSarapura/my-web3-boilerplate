@@ -15,26 +15,35 @@ Boilerplate de DApp listo para usar, construido con las herramientas más utiliz
 ## Estructura del proyecto
 
 ```
-src/
-├── app/
-│   ├── layout.tsx              # Root layout (proveedores, fuentes, metadata)
-│   ├── page.tsx                # Home page de ejemplo
-│   ├── page.module.css         # Estilos de la home page
-│   ├── error.tsx               # Error boundary global
-│   ├── error.module.css        # Estilos de error y 404
-│   ├── not-found.tsx           # Página 404
-│   ├── loading.tsx             # Loading state global
-│   ├── loading.module.css      # Estilos del loading spinner
-│   └── globals.css             # Reset, variables CSS y estilos globales
-├── components/
-│   ├── WalletInfo.tsx          # Ejemplo de uso de hooks de Wagmi
-│   └── WalletInfo.module.css   # Estilos del componente WalletInfo
-├── config/
-│   ├── env.ts                  # Validación de variables de entorno
-│   └── wagmi.ts                # Configuración de Wagmi + RainbowKit
-└── providers/
-    ├── ClientWeb3Provider.tsx   # Wrapper dinámico (ssr: false)
-    └── Web3Provider.tsx         # Composición de proveedores Web3
+├── contracts/                   # Smart contracts en Solidity (ver contracts/README.md)
+├── src/
+│   ├── abi/
+│   │   └── erc20.ts             # ABI de ejemplo (ERC-20)
+│   ├── app/
+│   │   ├── layout.tsx           # Root layout (proveedores, fuentes, metadata)
+│   │   ├── page.tsx             # Home page de ejemplo
+│   │   ├── page.module.css
+│   │   ├── error.tsx            # Error boundary global
+│   │   ├── error.module.css
+│   │   ├── not-found.tsx        # Página 404
+│   │   ├── loading.tsx          # Loading state global
+│   │   ├── loading.module.css
+│   │   └── globals.css          # Reset, variables CSS y estilos globales
+│   ├── components/
+│   │   ├── WalletInfo.tsx       # Info de wallet (useAccount, useBalance)
+│   │   ├── WalletInfo.module.css
+│   │   ├── TokenInfo.tsx        # Lectura de contrato (useReadContract)
+│   │   └── TokenInfo.module.css
+│   ├── config/
+│   │   ├── env.ts               # Validación de variables de entorno
+│   │   ├── theme.ts             # Tema custom de RainbowKit
+│   │   └── wagmi.ts             # Config de Wagmi, chains y transports (RPC)
+│   └── providers/
+│       ├── ClientWeb3Provider.tsx  # Wrapper dinámico (ssr: false)
+│       └── Web3Provider.tsx        # Composición de proveedores Web3
+├── .github/workflows/ci.yml    # Pipeline de CI (GitHub Actions)
+├── .env.local.example           # Template de variables de entorno
+└── LICENSE                      # MIT
 ```
 
 ## Setup
@@ -87,27 +96,75 @@ El proyecto incluye un workflow de GitHub Actions (`.github/workflows/ci.yml`) q
 4. **Tests** — `vitest run`
 5. **Build** — `next build`
 
+## RPC Provider privado (opcional)
+
+Por defecto, la app usa RPCs públicos. Para producción, agregá tu API key de Infura:
+
+1. Creá una cuenta en [infura.io](https://app.infura.io).
+2. Agregá tu key en `.env.local`:
+
+```
+NEXT_PUBLIC_INFURA_API_KEY=tu_key_aqui
+```
+
+3. Reiniciá el dev server.
+
+El código en `src/config/wagmi.ts` detecta la key automáticamente y cambia a tu RPC privado. Los comentarios en ese archivo explican cómo adaptarlo a otros providers (Alchemy, QuickNode, etc.).
+
 ## Agregar redes
 
-Editá `src/config/wagmi.ts` y agregá las redes que necesites desde `wagmi/chains`:
+Editá `src/config/wagmi.ts`:
+
+1. Importá la red desde `wagmi/chains`.
+2. Agregala al array `chains`.
+3. Agregá su transporte en el objeto `transports`.
 
 ```ts
-import { mainnet, sepolia, polygon, arbitrum, base } from 'wagmi/chains';
+import { mainnet, sepolia, polygon } from 'wagmi/chains';
 
 chains: [mainnet, sepolia, polygon],
+transports: {
+  [mainnet.id]: http(),
+  [sepolia.id]: http(),
+  [polygon.id]: http(),
+},
 ```
 
 ## Leer datos de la blockchain
 
-Usá los hooks de Wagmi dentro de componentes `'use client'`:
+Usá los hooks de Wagmi dentro de componentes `'use client'`. El componente `TokenInfo.tsx` es un ejemplo completo de cómo leer un smart contract con `useReadContract`:
 
 ```tsx
 'use client';
-import { useAccount, useBalance, useReadContract } from 'wagmi';
+import { useReadContract } from 'wagmi';
+import { erc20Abi } from '@/abi/erc20';
+
+const { data: name } = useReadContract({
+  address: '0x...', // dirección del contrato
+  abi: erc20Abi, // ABI del contrato (ver src/abi/)
+  functionName: 'name', // función a llamar
+});
 ```
+
+## Smart Contracts
+
+La carpeta `contracts/` está preparada para tus contratos en Solidity. El boilerplate no preinstala Hardhat ni Foundry — vos elegís tu toolchain.
+
+Leé **[contracts/README.md](./contracts/README.md)** para instrucciones paso a paso de cómo:
+
+- Configurar Hardhat o Foundry.
+- Compilar contratos y obtener ABIs.
+- Conectar los ABIs con el frontend via `src/abi/`.
+- Deployar y usar las direcciones en tus componentes.
+
+## Licencia
+
+[MIT](./LICENSE)
 
 ## Recursos
 
 - [Documentación de Wagmi](https://wagmi.sh/react/getting-started)
 - [Documentación de RainbowKit](https://www.rainbowkit.com/docs/introduction)
 - [viem docs](https://viem.sh/docs/getting-started)
+- [Hardhat docs](https://hardhat.org/docs)
+- [Foundry Book](https://book.getfoundry.sh/)

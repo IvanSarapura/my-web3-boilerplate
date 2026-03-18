@@ -43,6 +43,15 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# hardhat
+/artifacts
+/cache
+/ignition/deployments
+
+# foundry
+/contracts/out
+/contracts/cache
+
 # agents
 .agents/
 skills-lock.json

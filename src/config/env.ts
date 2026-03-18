@@ -14,4 +14,7 @@ export const env = {
     process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID,
   ),
   appName: process.env.NEXT_PUBLIC_APP_NAME?.trim() || 'My Web3 App',
+
+  // Opcional — si está vacío, se usan RPCs públicos (suficiente para desarrollo).
+  infuraApiKey: process.env.NEXT_PUBLIC_INFURA_API_KEY?.trim() || undefined,
 } as const;
