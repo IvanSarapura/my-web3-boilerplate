@@ -9,7 +9,8 @@ export function WalletInfo() {
   if (!isConnected) {
     return (
       <p className="wallet-status disconnected">
-        Ninguna wallet conectada. Hacé clic en &quot;Connect Wallet&quot; para empezar.
+        Ninguna wallet conectada. Hacé clic en &quot;Connect Wallet&quot; para
+        empezar.
       </p>
     );
   }

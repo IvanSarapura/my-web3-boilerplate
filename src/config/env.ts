@@ -13,6 +13,5 @@ export const env = {
     'NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID',
     process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID,
   ),
-  appName:
-    process.env.NEXT_PUBLIC_APP_NAME?.trim() || 'My Web3 App',
+  appName: process.env.NEXT_PUBLIC_APP_NAME?.trim() || 'My Web3 App',
 } as const;

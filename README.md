@@ -4,13 +4,13 @@ Boilerplate de DApp listo para usar, construido con las herramientas más utiliz
 
 ## Stack
 
-| Herramienta | Rol |
-|---|---|
-| [Next.js 16](https://nextjs.org/) (App Router) | Framework frontend |
-| [Wagmi v2](https://wagmi.sh/) | Hooks para interactuar con la blockchain |
-| [viem v2](https://viem.sh/) | Librería de bajo nivel para Ethereum (reemplaza a ethers.js) |
-| [RainbowKit](https://www.rainbowkit.com/) | UI de conexión de wallets |
-| [TanStack Query](https://tanstack.com/query) | Cache y estado asíncrono (requerido por Wagmi) |
+| Herramienta                                    | Rol                                                          |
+| ---------------------------------------------- | ------------------------------------------------------------ |
+| [Next.js 16](https://nextjs.org/) (App Router) | Framework frontend                                           |
+| [Wagmi v2](https://wagmi.sh/)                  | Hooks para interactuar con la blockchain                     |
+| [viem v2](https://viem.sh/)                    | Librería de bajo nivel para Ethereum (reemplaza a ethers.js) |
+| [RainbowKit](https://www.rainbowkit.com/)      | UI de conexión de wallets                                    |
+| [TanStack Query](https://tanstack.com/query)   | Cache y estado asíncrono (requerido por Wagmi)               |
 
 ## Estructura del proyecto
 
