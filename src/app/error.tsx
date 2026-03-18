@@ -1,5 +1,7 @@
 'use client';
 
+import styles from './error.module.css';
+
 export default function Error({
   error,
   reset,
@@ -9,10 +11,10 @@ export default function Error({
 }) {
   return (
     <main className="main">
-      <div className="error-page">
-        <h1>Something went wrong</h1>
-        <p className="error-message">{error.message}</p>
-        <button className="error-retry" onClick={reset}>
+      <div className={styles.container}>
+        <h1 className={styles.title}>Something went wrong</h1>
+        <p className={styles.message}>{error.message}</p>
+        <button className={styles.action} onClick={reset}>
           Try again
         </button>
       </div>

@@ -1,12 +1,13 @@
 import Link from 'next/link';
+import styles from './error.module.css';
 
 export default function NotFound() {
   return (
     <main className="main">
-      <div className="error-page">
-        <h1>404</h1>
-        <p className="error-message">This page could not be found.</p>
-        <Link href="/" className="error-retry">
+      <div className={styles.container}>
+        <h1 className={styles.title}>404</h1>
+        <p className={styles.message}>This page could not be found.</p>
+        <Link href="/" className={styles.action}>
           Back to home
         </Link>
       </div>

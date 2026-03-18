@@ -13,9 +13,30 @@ const geistMono = Geist_Mono({
   subsets: ['latin'],
 });
 
+const APP_NAME = 'My Web3 App';
+const APP_DESCRIPTION =
+  'Web3 boilerplate built with Next.js, RainbowKit and Wagmi';
+
 export const metadata: Metadata = {
-  title: 'My Web3 App',
-  description: 'Web3 boilerplate con Next.js, RainbowKit y Wagmi',
+  title: {
+    default: APP_NAME,
+    template: `%s | ${APP_NAME}`,
+  },
+  description: APP_DESCRIPTION,
+  icons: {
+    icon: '/favicon.ico',
+  },
+  openGraph: {
+    title: APP_NAME,
+    description: APP_DESCRIPTION,
+    type: 'website',
+    locale: 'en_US',
+  },
+  twitter: {
+    card: 'summary',
+    title: APP_NAME,
+    description: APP_DESCRIPTION,
+  },
 };
 
 export default function RootLayout({

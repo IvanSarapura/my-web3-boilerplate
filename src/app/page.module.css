@@ -1,0 +1,25 @@
+.hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  text-align: center;
+}
+
+.heroTitle {
+  font-size: 2.5rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.heroSubtitle {
+  color: var(--muted);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+}
+
+.section {
+  width: 100%;
+  max-width: 520px;
+}

@@ -17,20 +17,24 @@ Boilerplate de DApp listo para usar, construido con las herramientas más utiliz
 ```
 src/
 ├── app/
-│   ├── layout.tsx          # Root layout (proveedores, fuentes, metadata)
-│   ├── page.tsx            # Home page de ejemplo
-│   ├── error.tsx           # Error boundary global
-│   ├── not-found.tsx       # Página 404
-│   ├── loading.tsx         # Loading state global
-│   └── globals.css         # Estilos globales
+│   ├── layout.tsx              # Root layout (proveedores, fuentes, metadata)
+│   ├── page.tsx                # Home page de ejemplo
+│   ├── page.module.css         # Estilos de la home page
+│   ├── error.tsx               # Error boundary global
+│   ├── error.module.css        # Estilos de error y 404
+│   ├── not-found.tsx           # Página 404
+│   ├── loading.tsx             # Loading state global
+│   ├── loading.module.css      # Estilos del loading spinner
+│   └── globals.css             # Reset, variables CSS y estilos globales
 ├── components/
-│   └── WalletInfo.tsx      # Ejemplo de uso de hooks de Wagmi
+│   ├── WalletInfo.tsx          # Ejemplo de uso de hooks de Wagmi
+│   └── WalletInfo.module.css   # Estilos del componente WalletInfo
 ├── config/
-│   ├── env.ts              # Validación de variables de entorno
-│   └── wagmi.ts            # Configuración de Wagmi + RainbowKit
+│   ├── env.ts                  # Validación de variables de entorno
+│   └── wagmi.ts                # Configuración de Wagmi + RainbowKit
 └── providers/
-    ├── ClientWeb3Provider.tsx  # Wrapper dinámico (ssr: false)
-    └── Web3Provider.tsx        # Composición de proveedores Web3
+    ├── ClientWeb3Provider.tsx   # Wrapper dinámico (ssr: false)
+    └── Web3Provider.tsx         # Composición de proveedores Web3
 ```
 
 ## Setup

@@ -1,6 +1,7 @@
 'use client';
 
 import { useAccount, useBalance } from 'wagmi';
+import styles from './WalletInfo.module.css';
 
 export function WalletInfo() {
   const { address, isConnected, chain } = useAccount();
@@ -8,7 +9,7 @@ export function WalletInfo() {
 
   if (!isConnected) {
     return (
-      <p className="wallet-status disconnected">
+      <p className={styles.status}>
         Ninguna wallet conectada. Hacé clic en &quot;Connect Wallet&quot; para
         empezar.
       </p>
@@ -16,20 +17,20 @@ export function WalletInfo() {
   }
 
   return (
-    <div className="wallet-info">
-      <h2>Wallet conectada</h2>
-      <ul>
-        <li>
-          <span className="label">Dirección:</span>
-          <span className="value mono">{address}</span>
+    <div className={styles.card}>
+      <h2 className={styles.cardTitle}>Wallet conectada</h2>
+      <ul className={styles.list}>
+        <li className={styles.listItem}>
+          <span className={styles.label}>Dirección:</span>
+          <span className={`${styles.value} ${styles.mono}`}>{address}</span>
         </li>
-        <li>
-          <span className="label">Red:</span>
-          <span className="value">{chain?.name ?? 'Desconocida'}</span>
+        <li className={styles.listItem}>
+          <span className={styles.label}>Red:</span>
+          <span className={styles.value}>{chain?.name ?? 'Desconocida'}</span>
         </li>
-        <li>
-          <span className="label">Balance:</span>
-          <span className="value">
+        <li className={styles.listItem}>
+          <span className={styles.label}>Balance:</span>
+          <span className={styles.value}>
             {balance
               ? `${parseFloat(balance.formatted).toFixed(4)} ${balance.symbol}`
               : 'Cargando...'}
