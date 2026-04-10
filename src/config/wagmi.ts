@@ -1,41 +1,26 @@
 import { getDefaultConfig } from '@rainbow-me/rainbowkit';
-import { http } from 'wagmi';
-import { mainnet, sepolia } from 'wagmi/chains';
 import { env } from './env';
+import { supportedChains } from './chains';
+import { buildTransportsForChains } from './rpc';
 
 /**
  * Transports: cómo tu DApp se comunica con la blockchain.
  *
- * - Sin API key → http() usa RPCs públicos (OK para desarrollo).
- * - Con API key → http('https://...infura.io/v3/TU_KEY') usa tu RPC privado.
+ * - Sin API key → `http()` usa RPCs públicos (OK para desarrollo).
+ * - Con Infura → ver `src/config/rpc.ts` (mapa por chain id).
  *
- * Para configurar tu RPC privado de Infura:
- * 1. Creá una cuenta en https://app.infura.io
- * 2. Creá un proyecto y copiá tu API key.
- * 3. Pegá la key en .env.local como NEXT_PUBLIC_INFURA_API_KEY=tu_key_aqui
- * 4. Reiniciá el dev server (npm run dev).
+ * Redes soportadas y direcciones de contratos:
+ * - `NEXT_PUBLIC_CHAIN_PROFILE` → `src/config/chain-definitions.ts`
+ * - Contratos por chain → `src/config/contracts.ts`
  *
- * Si usás Alchemy en lugar de Infura, cambiá las URLs:
- *   mainnet → https://eth-mainnet.g.alchemy.com/v2/TU_KEY
- *   sepolia → https://eth-sepolia.g.alchemy.com/v2/TU_KEY
- *
- * Podés agregar más redes abajo, siguiendo el mismo patrón.
+ * Si usás Alchemy u otro proveedor, ajustá `buildTransportsForChains` o las URLs en `rpc.ts`.
  */
-const infuraKey = env.infuraApiKey;
-
-const transports = {
-  [mainnet.id]: infuraKey
-    ? http(`https://mainnet.infura.io/v3/${infuraKey}`)
-    : http(),
-  [sepolia.id]: infuraKey
-    ? http(`https://sepolia.infura.io/v3/${infuraKey}`)
-    : http(),
-};
+const transports = buildTransportsForChains(supportedChains, env.infuraApiKey);
 
 export const config = getDefaultConfig({
   appName: env.appName,
   projectId: env.walletConnectProjectId,
-  chains: [mainnet, sepolia],
+  chains: supportedChains,
   transports,
   ssr: true,
 });

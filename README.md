@@ -35,9 +35,14 @@ Boilerplate de DApp listo para usar, construido con las herramientas más utiliz
 │   │   ├── TokenInfo.tsx        # Lectura de contrato (useReadContract)
 │   │   └── TokenInfo.module.css
 │   ├── config/
+│   │   ├── chain-definitions.ts # Redes testnet/mainnet (wagmi chains)
+│   │   ├── chains.ts            # Cadenas activas según env + re-export explorers
+│   │   ├── contracts.ts         # Direcciones de contratos por chainId / perfil
 │   │   ├── env.ts               # Validación de variables de entorno
+│   │   ├── explorer.ts          # URLs de explorador (tx / address)
+│   │   ├── rpc.ts               # Transports HTTP por chain (Infura / público)
 │   │   ├── theme.ts             # Tema custom de RainbowKit
-│   │   └── wagmi.ts             # Config de Wagmi, chains y transports (RPC)
+│   │   └── wagmi.ts             # RainbowKit + Wagmi (usa chains + rpc)
 │   └── providers/
 │       ├── ClientWeb3Provider.tsx  # Wrapper dinámico (ssr: false)
 │       └── Web3Provider.tsx        # Composición de proveedores Web3
@@ -60,8 +65,9 @@ npm install
 cp .env.local.example .env.local
 ```
 
-Completá el archivo `.env.local` con tu **WalletConnect Project ID**.
-Podés obtener uno gratis en [cloud.walletconnect.com](https://cloud.walletconnect.com).
+Completá `.env.local` con tu **WalletConnect (Reown) Project ID** desde [cloud.reown.com](https://cloud.reown.com). Sin él, `npm run dev` igual arranca (placeholder de desarrollo), pero **WalletConnect (QR / móvil) puede no funcionar** hasta que configures un ID real. Para `npm run build` / producción el ID es obligatorio.
+
+**Redes y contratos:** `NEXT_PUBLIC_CHAIN_PROFILE` (`testnet` por defecto o `mainnet`) define qué cadenas expone Wagmi y qué direcciones usa el ejemplo de token. La fuente de verdad está en `src/config/chain-definitions.ts`, `src/config/contracts.ts` y `src/config/rpc.ts` (no en cada componente).
 
 ### 3. Correr el servidor de desarrollo
 
@@ -109,26 +115,13 @@ NEXT_PUBLIC_INFURA_API_KEY=tu_key_aqui
 
 3. Reiniciá el dev server.
 
-El código en `src/config/wagmi.ts` detecta la key automáticamente y cambia a tu RPC privado. Los comentarios en ese archivo explican cómo adaptarlo a otros providers (Alchemy, QuickNode, etc.).
+El código en `src/config/rpc.ts` + `wagmi.ts` usa la key para Infura por chain id. Para otro proveedor (Alchemy, etc.), ajustá las URLs en `rpc.ts`.
 
 ## Agregar redes
 
-Editá `src/config/wagmi.ts`:
-
-1. Importá la red desde `wagmi/chains`.
-2. Agregala al array `chains`.
-3. Agregá su transporte en el objeto `transports`.
-
-```ts
-import { mainnet, sepolia, polygon } from 'wagmi/chains';
-
-chains: [mainnet, sepolia, polygon],
-transports: {
-  [mainnet.id]: http(),
-  [sepolia.id]: http(),
-  [polygon.id]: http(),
-},
-```
+1. Importá la chain desde `wagmi/chains` en `src/config/chain-definitions.ts` y agregala a `testnetChains` o `mainnetChains`.
+2. En `src/config/rpc.ts`, añadí la URL de tu RPC para ese `chain.id` (si usás Infura u otro proveedor).
+3. En `src/config/contracts.ts`, registrá las direcciones de tus contratos por `chainId` y perfil (`testnet` / `mainnet`).
 
 ## Leer datos de la blockchain
 

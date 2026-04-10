@@ -2,6 +2,8 @@
 
 import { useReadContract, useAccount } from 'wagmi';
 import { erc20Abi } from '@/abi/erc20';
+import { getSupportedChainNames } from '@/config/chains';
+import { getUsdcAddress } from '@/config/contracts';
 import styles from './TokenInfo.module.css';
 
 /**
@@ -15,42 +17,43 @@ import styles from './TokenInfo.module.css';
  * 4. Cambiá `functionName` por la función que querés llamar.
  */
 
-// USDC en Ethereum Mainnet — reemplazá por la dirección de tu contrato.
-const USDC_ADDRESS = '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48' as const;
-
 export function TokenInfo() {
   const { isConnected, chain } = useAccount();
 
+  const contractAddress =
+    chain?.id !== undefined ? getUsdcAddress(chain.id) : undefined;
+  const isSupported = !!contractAddress;
+
   const { data: name, isLoading: nameLoading } = useReadContract({
-    address: USDC_ADDRESS,
+    address: contractAddress,
     abi: erc20Abi,
     functionName: 'name',
-    query: { enabled: isConnected && chain?.id === 1 },
+    query: { enabled: isConnected && isSupported },
   });
 
   const { data: symbol, isLoading: symbolLoading } = useReadContract({
-    address: USDC_ADDRESS,
+    address: contractAddress,
     abi: erc20Abi,
     functionName: 'symbol',
-    query: { enabled: isConnected && chain?.id === 1 },
+    query: { enabled: isConnected && isSupported },
   });
 
   const { data: decimals, isLoading: decimalsLoading } = useReadContract({
-    address: USDC_ADDRESS,
+    address: contractAddress,
     abi: erc20Abi,
     functionName: 'decimals',
-    query: { enabled: isConnected && chain?.id === 1 },
+    query: { enabled: isConnected && isSupported },
   });
 
   if (!isConnected) return null;
 
-  if (chain?.id !== 1) {
+  if (!isSupported) {
     return (
       <div className={styles.card}>
         <h2 className={styles.cardTitle}>Token Info (ejemplo)</h2>
         <p className={styles.hint}>
-          Cambiá a Ethereum Mainnet para ver este ejemplo de lectura de
-          contrato.
+          Cambiá a una de estas redes para ver este ejemplo de lectura de
+          contrato: {getSupportedChainNames()}.
         </p>
       </div>
     );
@@ -80,7 +83,7 @@ export function TokenInfo() {
           <li className={styles.listItem}>
             <span className={styles.label}>Contrato:</span>
             <span className={`${styles.value} ${styles.mono}`}>
-              {USDC_ADDRESS}
+              {contractAddress}
             </span>
           </li>
         </ul>

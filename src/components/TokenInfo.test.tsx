@@ -1,5 +1,5 @@
-import { render, screen } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
+import { render, screen, cleanup } from '@testing-library/react';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { TokenInfo } from './TokenInfo';
 
 vi.mock('wagmi', () => ({
@@ -13,6 +13,8 @@ const mockUseAccount = vi.mocked(useAccount);
 const mockUseReadContract = vi.mocked(useReadContract);
 
 describe('TokenInfo', () => {
+  afterEach(cleanup);
+
   it('renders nothing when wallet is not connected', () => {
     mockUseAccount.mockReturnValue({
       isConnected: false,
@@ -27,10 +29,10 @@ describe('TokenInfo', () => {
     expect(container.firstChild).toBeNull();
   });
 
-  it('shows switch-chain hint when not on mainnet', () => {
+  it('shows switch-chain hint when on an unsupported network', () => {
     mockUseAccount.mockReturnValue({
       isConnected: true,
-      chain: { id: 11155111, name: 'Sepolia' },
+      chain: { id: 1, name: 'Ethereum' },
     } as unknown as ReturnType<typeof useAccount>);
     mockUseReadContract.mockReturnValue({
       data: undefined,
@@ -39,13 +41,20 @@ describe('TokenInfo', () => {
 
     render(<TokenInfo />);
 
-    expect(screen.getByText(/cambiá a ethereum mainnet/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/cambiá a una de estas redes/i),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/sepolia/i)).toBeInTheDocument();
   });
 
-  it('shows token data when connected to mainnet', () => {
+  it.each([
+    { id: 11155111, name: 'Ethereum Sepolia' },
+    { id: 84532, name: 'Base Sepolia' },
+    { id: 43113, name: 'Avalanche Fuji' },
+  ])('shows token data when connected to $name', ({ id, name }) => {
     mockUseAccount.mockReturnValue({
       isConnected: true,
-      chain: { id: 1, name: 'Ethereum' },
+      chain: { id, name },
     } as unknown as ReturnType<typeof useAccount>);
 
     let callIndex = 0;
