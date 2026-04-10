@@ -77,6 +77,11 @@
   color: #ef4444;
 }
 
+.balanceHint {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
 @media (prefers-color-scheme: dark) {
   .fieldError {
     color: #f87171;

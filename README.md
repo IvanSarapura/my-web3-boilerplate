@@ -1,6 +1,6 @@
 # Web3 Boilerplate
 
-Boilerplate de DApp listo para producción, construido con las herramientas más utilizadas en el ecosistema Web3 moderno. Incluye ejemplos funcionales de lectura y escritura en contratos ERC-20, manejo completo del ciclo de vida de transacciones, soporte multi-chain con perfiles testnet/mainnet y un sistema de configuración centralizado.
+Boilerplate de DApp listo para producción, construido con las herramientas más utilizadas en el ecosistema Web3 moderno. Incluye ejemplos funcionales de lectura y escritura en contratos ERC-20, validación de formularios con Zod y React Hook Form, manejo completo del ciclo de vida de transacciones, soporte multi-chain con perfiles testnet/mainnet y un sistema de configuración centralizado.
 
 ---
 
@@ -16,15 +16,16 @@ Boilerplate de DApp listo para producción, construido con las herramientas más
 8. [Leer datos de la blockchain](#leer-datos-de-la-blockchain)
 9. [Escribir en la blockchain](#escribir-en-la-blockchain)
 10. [Ciclo de vida de una transacción](#ciclo-de-vida-de-una-transacción)
-11. [Referencia de hooks](#referencia-de-hooks)
-12. [Referencia de componentes](#referencia-de-componentes)
-13. [Agregar redes](#agregar-redes)
-14. [Agregar contratos](#agregar-contratos)
-15. [Smart Contracts (Solidity)](#smart-contracts-solidity)
-16. [Testing](#testing)
-17. [CI/CD](#cicd)
-18. [Scripts disponibles](#scripts-disponibles)
-19. [Recursos](#recursos)
+11. [Validación de formularios](#validación-de-formularios)
+12. [Referencia de hooks](#referencia-de-hooks)
+13. [Referencia de componentes](#referencia-de-componentes)
+14. [Agregar redes](#agregar-redes)
+15. [Agregar contratos](#agregar-contratos)
+16. [Smart Contracts (Solidity)](#smart-contracts-solidity)
+17. [Testing](#testing)
+18. [CI/CD](#cicd)
+19. [Scripts disponibles](#scripts-disponibles)
+20. [Recursos](#recursos)
 
 ---
 
@@ -39,6 +40,8 @@ Boilerplate de DApp listo para producción, construido con las herramientas más
 | [viem](https://viem.sh/)                                         | v2      | Librería Ethereum de bajo nivel (reemplaza ethers.js) |
 | [RainbowKit](https://www.rainbowkit.com/)                        | v2      | UI de conexión de wallets multi-proveedor             |
 | [TanStack Query](https://tanstack.com/query)                     | v5      | Cache y estado asíncrono (requerido por Wagmi)        |
+| [Zod](https://zod.dev/)                                          | v4      | Validación de schemas y sanitización de inputs        |
+| [React Hook Form](https://react-hook-form.com/)                  | v7      | Gestión de formularios performant con validación      |
 | [Vitest](https://vitest.dev/)                                    | v4      | Runner de tests unitarios                             |
 | [ESLint](https://eslint.org/) + [Prettier](https://prettier.io/) | v9 / v3 | Linting y formateo                                    |
 | [Husky](https://typicode.github.io/husky/) + lint-staged         | v9      | Validación en pre-commit                              |
@@ -91,6 +94,12 @@ aleph2026/
 │   ├── hooks/
 │   │   ├── useErc20Transfer.ts       # Hook: ciclo completo de transferencia ERC-20
 │   │   └── useErc20Transfer.test.ts
+│   │
+│   ├── lib/
+│   │   └── schemas/
+│   │       ├── transfer.ts           # Schema Zod: ethereumAddress, positiveAmount,
+│   │       │                         #   transferSchema, isValidAddress, parseTokenAmount
+│   │       └── transfer.test.ts
 │   │
 │   └── providers/
 │       ├── ClientWeb3Provider.tsx    # Dynamic import con ssr: false (evita hidratación)
@@ -407,6 +416,134 @@ El componente `TxStatus` los muestra de forma diferenciada: `simulateError` apar
 
 ---
 
+## Validación de formularios
+
+Los formularios de transacción tienen dos niveles de validación con responsabilidades distintas:
+
+| Nivel   | Herramienta           | Valida                                                  | Momento                                              |
+| ------- | --------------------- | ------------------------------------------------------- | ---------------------------------------------------- |
+| Formato | Zod + React Hook Form | Estructura del input (dirección válida, monto positivo) | En tiempo real, mientras el usuario escribe          |
+| Negocio | `useSimulateContract` | Si el contrato va a revertir (saldo insuficiente, etc.) | En background, reactivo a los valores del formulario |
+
+Separar estas responsabilidades evita duplicar lógica: Zod se ocupa de "¿es esto parseable?"; la simulación se ocupa de "¿lo aceptará la blockchain?".
+
+### Schema Zod: `src/lib/schemas/transfer.ts`
+
+El archivo exporta tres capas:
+
+**1. Primitivos reutilizables** — bloques de construcción para componer otros schemas:
+
+```ts
+import { ethereumAddress, positiveAmount } from '@/lib/schemas/transfer';
+
+// Componer en otro schema
+const approveSchema = z.object({
+  spender: ethereumAddress,
+  amount: positiveAmount,
+});
+```
+
+**2. Schema del formulario** — compone los primitivos y define los tipos TypeScript:
+
+```ts
+export const transferSchema = z.object({
+  to: ethereumAddress, // trim + isAddress (viem)
+  amount: positiveAmount, // trim + parseFloat > 0
+});
+
+export type TransferFormValues = z.infer<typeof transferSchema>;
+// → { to: string; amount: string }
+```
+
+El `.trim()` integrado en cada primitivo sanitiza automáticamente los valores antes de la validación. El output de `handleSubmit` siempre llega con whitespace removido.
+
+**3. Utilidades standalone** — para usar fuera de formularios (en hooks, scripts, etc.):
+
+```ts
+import { isValidAddress, parseTokenAmount } from '@/lib/schemas/transfer';
+
+isValidAddress('0xd8dA...'); // true  — wrapper de isAddress con trim
+isValidAddress('bad'); // false
+
+parseTokenAmount('10.5'); // 10.5  — retorna number o null
+parseTokenAmount('0'); // null
+parseTokenAmount('abc'); // null
+```
+
+### React Hook Form: integración en `TransferForm`
+
+```tsx
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import {
+  transferSchema,
+  type TransferFormValues,
+} from '@/lib/schemas/transfer';
+
+const {
+  register,
+  handleSubmit,
+  watch,
+  reset,
+  formState: { errors },
+} = useForm<TransferFormValues>({
+  resolver: zodResolver(transferSchema),
+  mode: 'onChange', // valida en tiempo real mientras el usuario escribe
+  defaultValues: { to: '', amount: '' },
+});
+```
+
+**`mode: 'onChange'`** muestra los errores de formato a medida que el usuario escribe — ideal para DApps donde los inputs son largos (direcciones de 42 caracteres) y el feedback inmediato mejora la UX.
+
+### Valores reactivos para simulación
+
+React Hook Form gestiona el estado del formulario internamente (inputs no controlados). Para que `useErc20Transfer` actualice la simulación mientras el usuario escribe, se usa `watch()`:
+
+```tsx
+// Los valores observados se trimean manualmente para que la simulación use
+// los mismos valores sanitizados que el schema producirá al hacer submit.
+const toValue = watch('to')?.trim();
+const amountValue = watch('amount')?.trim();
+
+const { execute, canExecute, simulateError } = useErc20Transfer({
+  contractAddress,
+  decimals,
+  to: isAddress(toValue ?? '') ? (toValue as Address) : undefined,
+  amount: amountValue ?? '',
+});
+```
+
+Este patrón conecta el estado del formulario con la simulación sin duplicar validación: Zod valida formato en el form, Wagmi valida la tx en background.
+
+### Flujo completo de submit
+
+```
+Usuario hace clic en "Enviar"
+        │
+        ▼
+handleSubmit(onSubmit)     ← React Hook Form ejecuta zodResolver
+        │
+        ├── Zod falla → muestra errores inline, no llama a onSubmit
+        │
+        └── Zod pasa → onSubmit(sanitizedValues) es llamado
+                │
+                ▼
+            execute()      ← usa el request ya simulado en background
+                │
+                ▼
+            wallet popup → pending → confirming → success/error
+```
+
+### Nota sobre TypeScript 5.5+ y type predicates
+
+`isAddress` de viem es un type guard (`(val) => val is Address`). En TypeScript 5.5+, una lambda que solo llama a un type guard es inferida automáticamente como type predicate. Para evitar que Zod infiera el output del schema como `Address` (en lugar de `string`) — lo que rompe los generics de RHF — el refine usa anotación explícita:
+
+```ts
+.refine((val): boolean => isAddress(val), 'Dirección Ethereum inválida')
+```
+
+---
+
 ## Referencia de hooks
 
 ### `useErc20Transfer`
@@ -600,16 +737,17 @@ El proyecto usa **Vitest** con `@testing-library/react` y `jsdom`. Todos los tes
 
 ### Estructura de tests
 
-| Archivo                                | Qué testea                                                          |
-| -------------------------------------- | ------------------------------------------------------------------- |
-| `src/config/env.test.ts`               | Validación de variables de entorno (missing, trim, defaults)        |
-| `src/config/chains.test.ts`            | Helpers de URLs de explorador por chain                             |
-| `src/config/contracts.test.ts`         | Resolución de direcciones por chainId y perfil                      |
-| `src/components/WalletInfo.test.tsx`   | Estados: desconectado, conectado con balance, cargando balance      |
-| `src/components/TokenInfo.test.tsx`    | Estados: desconectado, red no soportada, datos del token            |
-| `src/components/TxStatus.test.tsx`     | Todos los status, ARIA, error detail, explorer link                 |
-| `src/components/TransferForm.test.tsx` | Desconectado, red no soportada, validación, estados de envío, reset |
-| `src/hooks/useErc20Transfer.test.ts`   | Ciclo de vida: status, simulateError, canExecute, execute, txHash   |
+| Archivo                                | Qué testea                                                                       |
+| -------------------------------------- | -------------------------------------------------------------------------------- |
+| `src/config/env.test.ts`               | Validación de variables de entorno (missing, trim, defaults)                     |
+| `src/config/chains.test.ts`            | Helpers de URLs de explorador por chain                                          |
+| `src/config/contracts.test.ts`         | Resolución de direcciones por chainId y perfil                                   |
+| `src/components/WalletInfo.test.tsx`   | Estados: desconectado, conectado con balance, cargando balance                   |
+| `src/components/TokenInfo.test.tsx`    | Estados: desconectado, red no soportada, datos del token                         |
+| `src/components/TxStatus.test.tsx`     | Todos los status, ARIA, error detail, explorer link                              |
+| `src/components/TransferForm.test.tsx` | Desconectado, red no soportada, validación Zod, balance, estados de envío, reset |
+| `src/hooks/useErc20Transfer.test.ts`   | Ciclo de vida: status, simulateError, canExecute, execute, txHash                |
+| `src/lib/schemas/transfer.test.ts`     | Schema: address, amount, trim, errores; `isValidAddress`, `parseTokenAmount`     |
 
 ### Patrón de mock de Wagmi
 
@@ -699,6 +837,9 @@ Esto garantiza que ningún commit rompa el formato o las reglas de lint, complem
 - [viem — Getting Started](https://viem.sh/docs/getting-started)
 - [RainbowKit — Introduction](https://www.rainbowkit.com/docs/introduction)
 - [TanStack Query](https://tanstack.com/query/latest)
+- [Zod — Getting Started](https://zod.dev/?id=basic-usage)
+- [React Hook Form — Docs](https://react-hook-form.com/docs)
+- [@hookform/resolvers — Zod](https://github.com/react-hook-form/resolvers#zod)
 - [Hardhat Docs](https://hardhat.org/docs)
 - [Foundry Book](https://book.getfoundry.sh/)
 
